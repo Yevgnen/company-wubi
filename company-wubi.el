@@ -193,9 +193,9 @@ Provide completion info according to COMMAND and ARG.  IGNORED, not used."
   (cl-case command
     (interactive (company-begin-backend 'company-wubi))
     (prefix (or (company-wubi--prefix) 'stop))
-    ;; TODO: fix the unexpect order of the candidates.
     (candidates (company-wubi--candidates arg))
     (annotation (company-wubi--annotation arg))
+    (sorted t)
     (no-cache t)))
 
 (provide 'company-wubi)
