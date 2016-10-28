@@ -1,7 +1,5 @@
 #+TITLE: README
 #+DATE: <2016-10-28 Fri>
-#+AUTHOR: Yevgnen Koh
-#+EMAIL: wherejoystarts@gmail.com
 #+OPTIONS: ':nil *:t -:t ::t <:t H:5 \n:nil ^:t arch:headline author:t c:nil
 #+OPTIONS: creator:comment d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t
 #+OPTIONS: num:t p:nil pri:nil stat:t tags:t tasks:t tex:t timestamp:t toc:t
@@ -14,6 +12,15 @@
 #+SELECT_TAGS: export
 
 * Introduction
-WUBI input(五笔输入法) for emacs using [[http://company-mode.github.io][=company-mode=]].
+A very simple Wubi input method(五笔输入法) for emacs using [[http://company-mode.github.io][~company-mode~]].
+* Usage
+Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
 * Screenshot
 [[file:wubi.gif]]
+* Todo
+- Better default dictionary.
+- Fix the crazy drop list.
+- Switch between English and Chinese input state.
+- Support more auto completions.
+- Support user dictionaries.
+- Search by Pinyin.
