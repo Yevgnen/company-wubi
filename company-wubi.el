@@ -36,15 +36,56 @@
   "Completion back-end for WUBI."
   :group 'company)
 
-;; TODO: Use defcustom
-(defvar company-wubi-dict-path "wubi.txt")
+(defcustom company-wubi-dict-path
+  "wubi.txt"
+  "Location of the wubi dict file.
 
+A string containing the name or the full path of the dict."
+  :group 'company-wubi
+  :type '(file :must-match t)
+  :risky t)
+
+(defcustom company-wubi-idle-delay
+  0
+  "Overwrite the `company-idle-delay' variable."
+  :group 'company-wubi)
+
+(defcustom company-wubi-backends
+  '(company-wubi)
+  "Overwrite the `company-backends' variable."
+  :group 'company-wubi
+  :type 'list)
+
+(defcustom company-wubi-minimum-prefix-length
+  1
+  "Overwrite the `company-minimum-prefix-length' variable."
+  :group 'company-wubi
+  :type 'number)
+
+(defcustom company-wubi-tooltip-limit
+  5
+  "Overwrite the `company-tooltip-limit' variable."
+  :group 'company-wubi
+  :type 'number)
+
+(defcustom company-wubi-tooltip-align-annotations
+  nil
+  "Overwrite the `company-tooltip-align-annotations' variable."
+  :group 'company-wubi
+  :type 'boolean)
+
+(defcustom company-wubi-auto-complete-chars
+  '((input " " output  nil command nil)
+    (input "," output "，" command nil)
+    (input "." output "。" command nil))
+  "The auto complete char mapping in list form.
+
+Use `input' to trigger insert `output' when completing.
+The `command' field should be set to `nil'."
+  :group 'company-wubi)
+
+;; Internal variables
 (defvar company-wubi-table nil)
-
-(defvar company-wubi-auto-complete-chars '((input " " output  nil command nil)
-                                           (input "," output "，" command nil)
-                                           (input "." output "。" command nil)))
-
 (defvar company-wubi-enable-p nil)
 
 (define-minor-mode wubi-indication-mode
@@ -140,11 +181,11 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
   (company-wubi--load-dict)
 
   ;; Set company for better input experience
-  (company-wubi--localize-variable 'company-idle-delay 0)
-  (company-wubi--localize-variable 'company-backends '(company-wubi))
-  (company-wubi--localize-variable 'company-minimum-prefix-length 1)
-  (company-wubi--localize-variable 'company-tooltip-limit 6)
-  (company-wubi--localize-variable 'company-tooltip-align-annotations nil)
+  (company-wubi--localize-variable 'company-idle-delay company-wubi-idle-delay)
+  (company-wubi--localize-variable 'company-backends company-wubi-backends)
+  (company-wubi--localize-variable 'company-minimum-prefix-length company-wubi-minimum-prefix-length)
+  (company-wubi--localize-variable 'company-tooltip-limit company-wubi-tooltip-limit)
+  (company-wubi--localize-variable 'company-tooltip-align-annotations company-wubi-tooltip-align-annotations)
 
   ;; Set keys
   ;; TODO: Unbind the number keys
