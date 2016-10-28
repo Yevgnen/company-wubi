@@ -37,7 +37,7 @@
   :group 'company)
 
 (defcustom company-wubi-dict-path
-  "wubi.txt"
+  (expand-file-name "wubi.txt" (file-name-directory (buffer-file-name)))
   "Location of the wubi dict file.
 
 A string containing the name or the full path of the dict."
