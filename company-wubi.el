@@ -36,9 +36,18 @@
   "Completion back-end for WUBI."
   :group 'company)
 
-(defcustom company-wubi-dict-path
-  (expand-file-name "wubi.txt" (file-name-directory (buffer-file-name)))
+(defcustom company-wubi-wb-dict-file
+  (expand-file-name "wb_table.txt" (file-name-directory (buffer-file-name)))
   "Location of the wubi dict file.
+
+A string containing the name or the full path of the dict."
+  :group 'company-wubi
+  :type '(file :must-match t)
+  :risky t)
+
+(defcustom company-wubi-py-dict-file
+  (expand-file-name "py_table.txt" (file-name-directory (buffer-file-name)))
+  "Location of the pinyin dict file.
 
 A string containing the name or the full path of the dict."
   :group 'company-wubi
@@ -114,7 +123,8 @@ The `command' field should be set to `nil'."
   :group 'company-wubi)
 
 ;; Internal variables
-(defvar company-wubi-table nil)
+(defvar company-wubi-wb-table nil)
+(defvar company-wubi-py-table nil)
 (defvar company-wubi-enable-p nil)
 (defvar company-wubi-mark-pair 0)
 
@@ -125,13 +135,40 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
   :global t
   :lighter " 五")
 
+(defun company-wubi--load-default-dict (file var)
+  (with-temp-buffer
+    (insert-file-contents file)
+    (set (intern (symbol-name var))
+         (-map (lambda (l)
+                 (s-split " " l))
+               (-map #'s-trim
+                     (s-split "\n" (buffer-string)))))))
+
+(defun company-wubi--load-dict ()
+  "Load the WUBI dict."
+  (company-wubi--load-default-dict company-wubi-wb-dict-file 'company-wubi-wb-table)
+  (company-wubi--load-default-dict company-wubi-py-dict-file 'company-wubi-py-table))
+
+(defun company-wubi--unload-dict ()
+  "Load the WUBI dict."
+  (setq company-wubi-wb-table nil)
+  (setq company-wubi-py-table nil))
+
 (defun company-wubi--prefix ()
   "Get a prefix from current position."
-  (when (looking-back "[a-z]+" 0 t)
+  (when (looking-back "`?[a-z]+" 0 t)
     (let ((str (match-string 0)))
       str)))
 
-(defun company-wubi--candidates (prefix)
+(defun company-wubi--py-candidates (prefix)
+  (-flatten
+   (-map #'cdr
+         (-take (* 5 company-tooltip-limit)
+                (-filter (lambda (l)
+                           (string-prefix-p prefix (car l)))
+                         company-wubi-py-table)))))
+
+(defun company-wubi--wb-candidates (prefix)
   (-distinct
    (-sort (lambda (x y)
             (< (length (get-text-property 0 'code x))
@@ -146,26 +183,16 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                  (-take (* 2 company-tooltip-limit)
                         (-filter (lambda (l)
                                    (string-prefix-p prefix (car l)))
-                                 company-wubi-table)))))))
+                                 company-wubi-wb-table)))))))
+
+(defun company-wubi--candidates (prefix)
+  (if (s-starts-with? "`" prefix)
+      (company-wubi--py-candidates (substring-no-properties prefix 1))
+    (company-wubi--wb-candidates prefix)))
 
 (defun company-wubi--annotation (candidate)
   "Use the company annotation to show the left input codes."
   (get-text-property 0 'code candidate))
-
-(defun company-wubi--load-dict ()
-  "Load the WUBI dict."
-  (with-temp-buffer
-    (insert-file-contents company-wubi-dict-path)
-    (setq company-wubi-table
-          (-map
-           (lambda (l) (s-split " " l))
-           (-map
-            #'s-trim
-            (s-split "\n" (buffer-string)))))))
-
-(defun company-wubi--unload-dict ()
-  "Load the WUBI dict."
-  (setq company-wubi-table nil))
 
 (defun company-wubi--localize-variable (var val)
   "Use local company setting for better user experiences."
@@ -303,7 +330,7 @@ Provide completion info according to COMMAND and ARG.  IGNORED, not used."
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-wubi))
-    (prefix (or (company-wubi--prefix) 'stop))
+    (prefix (company-wubi--prefix))
     (candidates (company-wubi--candidates arg))
     (annotation (company-wubi--annotation arg))
     (sorted t)
