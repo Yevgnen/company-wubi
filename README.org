@@ -10,17 +10,29 @@
 #+KEYWORDS:
 #+LANGUAGE: en
 #+SELECT_TAGS: export
+#+OPTIONS: ':t
 
 * Introduction
 A very simple Wubi input method(五笔输入法) for emacs using [[http://company-mode.github.io][~company-mode~]].
 * Usage
 Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
+* Features
+- 使用清歌输入法的词库；
+- 支持标点符号自动上屏；
+- 使用 ~-/=~ 键翻页；
+- 使用分号与引号键选择第二第三候选词;
+- 支持临时拼音，使用 ~`~ 前缀可以临时输入拼音；
+- 支持拼音反查。
 * Screenshot
 [[file:wubi.gif]]
 * Todo
-- Better default dictionary.
-- Fix the crazy drop list.
-- Switch between English and Chinese input state.
-- Support more auto completions.
-- Support user dictionaries.
-- Search by Pinyin.
+- 支持四码上屏；
+- 改进候选窗汉字无法正确对齐；
+- 与英文混输时，字母后面需要加空格才能正确输入；
+- 使用local的开关设定，目前通过劫持company-mode的设置实现；
+- 切换中英输入状态；
+- 用户词典以及词频调整；
+- ~z~ 键模糊匹配；
+- 改进性能。
+  
+受限于 ~company-mode~ ，部分功能可能无法实现或不会实现。
