@@ -77,7 +77,32 @@ A string containing the name or the full path of the dict."
 (defcustom company-wubi-auto-complete-chars
   '((input " " output  nil command nil)
     (input "," output "，" command nil)
-    (input "." output "。" command nil))
+    (input "." output "。" command nil)
+    (input "~" output "～" command nil)
+    (input "!" output "！" command nil)
+    (input "@" output "‧" command nil)
+    (input "#" output "＃" command nil)
+    (input "$" output "￥" command nil)
+    (input "%" output "％" command nil)
+    (input "^" output "……" command nil)
+    (input "&" output "＆" command nil)
+    (input "*" output "×" command nil)
+    (input "(" output "（" command nil)
+    (input ")" output "）" command nil)
+    (input "_" output "—" command nil)
+    (input "+" output "＋" command nil)
+    (input "{" output "｛" command nil)
+    (input "}" output "｝" command nil)
+    (input "[" output "［" command nil)
+    (input "]" output "］" command nil)
+    (input "\\" output "、" command nil)
+    (input ":" output "：" command nil)
+    (input "\"" output "“”" command nil)
+    (input "|" output "｜" command nil)
+    (input "?" output "？" command nil)
+    (input "/" output "、" command nil)
+    (input "<" output "《》" command nil)
+    (input ">" output "〈〉" command nil))
   "The auto complete char mapping in list form.
 
 Use `input' to trigger insert `output' when completing.
@@ -87,6 +112,7 @@ The `command' field should be set to `nil'."
 ;; Internal variables
 (defvar company-wubi-table nil)
 (defvar company-wubi-enable-p nil)
+(defvar company-wubi-mark-pair 0)
 
 (define-minor-mode wubi-indication-mode
   "Toggle Wubi indication mode on or off.
@@ -160,9 +186,19 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                   (define-key company-active-map in
                     `(lambda ()
                        (interactive)
+                       ;; Select the current candidate or 2nd/3rd candidate
                        (company-complete-selection)
-                       (if ,out
-                           (insert ,out))))
+
+                       ;; Input the auto complete char
+                       (let ((len (length ,out)))
+                         (cond ((= len 0)
+                                nil)
+                               ((= len 1)
+                                (insert ,out))
+                               ((= len 2)
+                                (progn
+                                  (insert (elt ,out company-wubi-mark-pair))
+                                  (setq company-wubi-mark-pair (- 1 company-wubi-mark-pair))))))))
                   mapping))
               company-wubi-auto-complete-chars)))
 
