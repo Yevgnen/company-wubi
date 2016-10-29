@@ -76,6 +76,8 @@ A string containing the name or the full path of the dict."
 
 (defcustom company-wubi-auto-complete-chars
   '((input " " output  nil command nil)
+    (input "-" output  nil command nil)
+    (input "=" output  nil command nil)
     (input ";" output  nil command nil)
     (input "'" output  nil command nil)
     (input "," output "，" command nil)
@@ -175,6 +177,28 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
   (set (intern (symbol-name var))
        (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
 
+(defun company-wubi-previous-page ()
+  "Move to previous page of candidates."
+  (interactive)
+  (company-set-selection
+   (- company-selection
+      company-wubi-tooltip-limit
+      (mod company-selection
+           company-wubi-tooltip-limit))))
+
+(defun company-wubi-next-page ()
+  "Move to next page of candidates."
+  (interactive)
+  (company-set-selection
+   (+ company-selection
+      company-wubi-tooltip-limit
+      (- company-wubi-tooltip-limit
+         (1+ (mod company-selection
+                  company-wubi-tooltip-limit)))))
+  (company-set-selection
+   (- company-selection
+      (1- company-wubi-tooltip-limit))))
+
 (defun company-wubi--bind-auto-complete-keys ()
   "Bind the auto complete keys like `,', `.'."
   (setq company-wubi-auto-complete-chars
@@ -191,6 +215,8 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                        ;; Select the current candidate or 2nd/3rd candidate or change page
                        (cond ((string= ,in ";") (company-complete-number 2))
                              ((string= ,in "'") (company-complete-number 3))
+                             ((string= ,in "-") (company-wubi-previous-page))
+                             ((string= ,in "=") (company-wubi-next-page))
                              (t (company-complete-selection)))
                        ;; Input the auto complete char
                        (let ((len (length ,out)))
