@@ -176,45 +176,50 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
         company-wubi-auto-complete-chars))
 
 (defun company-wubi-enable ()
+  "Enable the wubi input method."
   (interactive)
   ;; Load the input dict
-  (company-wubi--load-dict)
+  (unless company-wubi-enable-p
+    (company-wubi--load-dict)
 
-  ;; Set company for better input experience
-  (company-wubi--localize-variable 'company-idle-delay company-wubi-idle-delay)
-  (company-wubi--localize-variable 'company-backends company-wubi-backends)
-  (company-wubi--localize-variable 'company-minimum-prefix-length company-wubi-minimum-prefix-length)
-  (company-wubi--localize-variable 'company-tooltip-limit company-wubi-tooltip-limit)
-  (company-wubi--localize-variable 'company-tooltip-align-annotations company-wubi-tooltip-align-annotations)
+    ;; Set company for better input experience
+    (company-wubi--localize-variable 'company-idle-delay company-wubi-idle-delay)
+    (company-wubi--localize-variable 'company-backends company-wubi-backends)
+    (company-wubi--localize-variable 'company-minimum-prefix-length company-wubi-minimum-prefix-length)
+    (company-wubi--localize-variable 'company-tooltip-limit company-wubi-tooltip-limit)
+    (company-wubi--localize-variable 'company-tooltip-align-annotations company-wubi-tooltip-align-annotations)
 
-  ;; Set keys
-  ;; TODO: Unbind the number keys
-  (dotimes (i 10)
-    (define-key company-active-map (read-kbd-macro (format "%d" i)) 'company-complete-number))
-  (company-wubi--bind-auto-complete-keys)
+    ;; Set keys
+    ;; TODO: Unbind the number keys
+    (dotimes (i 10)
+      (define-key company-active-map (read-kbd-macro (format "%d" i)) 'company-complete-number))
+    (company-wubi--bind-auto-complete-keys)
 
-  (setq company-wubi-enable-p t)
-  (message "Wubi input enabled!"))
+    (setq company-wubi-enable-p t)
+    (message "Wubi input enabled!")))
 
 (defun company-wubi-disable ()
+  "Disable the wubi input method."
   (interactive)
-  ;; Unload the input dict
-  (company-wubi--unload-dict)
+  (when company-wubi-enable-p
+    ;; Unload the input dict
+    (company-wubi--unload-dict)
 
-  ;; Restore the company configs
-  (company-wubi--delocalize-variable 'company-idle-delay)
-  (company-wubi--delocalize-variable 'company-backends)
-  (company-wubi--delocalize-variable 'company-minimum-prefix-length)
-  (company-wubi--delocalize-variable 'company-tooltip-limit)
-  (company-wubi--delocalize-variable 'company-tooltip-align-annotations)
+    ;; Restore the company configs
+    (company-wubi--delocalize-variable 'company-idle-delay)
+    (company-wubi--delocalize-variable 'company-backends)
+    (company-wubi--delocalize-variable 'company-minimum-prefix-length)
+    (company-wubi--delocalize-variable 'company-tooltip-limit)
+    (company-wubi--delocalize-variable 'company-tooltip-align-annotations)
 
-  ;; Unbind keys
-  (company-wubi--unbind-auto-complate-keys)
+    ;; Unbind keys
+    (company-wubi--unbind-auto-complate-keys)
 
-  (setq company-wubi-enable-p nil)
-  (message "Wubi input disabled!"))
+    (setq company-wubi-enable-p nil)
+    (message "Wubi input disabled!")))
 
 (defun company-wubi-toggle ()
+  "Toggle the wubi input method."
   (interactive)
   (if company-wubi-enable-p
       (progn
