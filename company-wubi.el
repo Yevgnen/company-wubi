@@ -54,6 +54,15 @@ A string containing the name or the full path of the dict."
   :type '(file :must-match t)
   :risky t)
 
+(defcustom company-wubi-wb-reverse-dict-file
+  (expand-file-name "wb_reverse_table.txt" (file-name-directory (buffer-file-name)))
+  "Location of the wubi reverse dict file.
+
+A string containing the name or the full path of the dict."
+  :group 'company-wubi
+  :type '(file :must-match t)
+  :risky t)
+
 (defcustom company-wubi-idle-delay
   0
   "Overwrite the `company-idle-delay' variable."
@@ -122,11 +131,21 @@ Use `input' to trigger insert `output' when completing.
 The `command' field should be set to `nil'."
   :group 'company-wubi)
 
+(defcustom company-wubi-show-codes-in-pinyin
+  t
+  "Show wubi codes when using pinyin.
+
+Currently this will slow down the completion progress."
+  :group 'company-wubi
+  :type 'boolean)
+
 ;; Internal variables
 (defvar company-wubi-wb-table nil)
 (defvar company-wubi-py-table nil)
+(defvar company-wubi-wb-reverse-table nil)
 (defvar company-wubi-enable-p nil)
 (defvar company-wubi-mark-pair 0)
+(defvar company-wubi-p t)
 
 (define-minor-mode wubi-indication-mode
   "Toggle Wubi indication mode on or off.
@@ -145,14 +164,16 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                      (s-split "\n" (buffer-string)))))))
 
 (defun company-wubi--load-dict ()
-  "Load the WUBI dict."
+  "Load the dictionaries."
   (company-wubi--load-default-dict company-wubi-wb-dict-file 'company-wubi-wb-table)
-  (company-wubi--load-default-dict company-wubi-py-dict-file 'company-wubi-py-table))
+  (company-wubi--load-default-dict company-wubi-py-dict-file 'company-wubi-py-table)
+  (company-wubi--load-default-dict company-wubi-wb-reverse-dict-file 'company-wubi-wb-reverse-table))
 
 (defun company-wubi--unload-dict ()
-  "Load the WUBI dict."
+  "Unload the dictionaries"
   (setq company-wubi-wb-table nil)
-  (setq company-wubi-py-table nil))
+  (setq company-wubi-py-table nil)
+  (setq company-wubi-wb-reverse-table nil))
 
 (defun company-wubi--prefix ()
   "Get a prefix from current position."
@@ -161,6 +182,7 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
       str)))
 
 (defun company-wubi--py-candidates (prefix)
+  "Return the candidates under pinyin input given `prefix'."
   (-flatten
    (-map #'cdr
          (-take (* 5 company-tooltip-limit)
@@ -169,6 +191,7 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                          company-wubi-py-table)))))
 
 (defun company-wubi--wb-candidates (prefix)
+  "Return the candidates under wubi input given `prefix'."
   (-distinct
    (-sort (lambda (x y)
             (< (length (get-text-property 0 'code x))
@@ -186,13 +209,71 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
                                  company-wubi-wb-table)))))))
 
 (defun company-wubi--candidates (prefix)
+  "Return the candidates under given `prefix'."
   (if (s-starts-with? "`" prefix)
-      (company-wubi--py-candidates (substring-no-properties prefix 1))
-    (company-wubi--wb-candidates prefix)))
+      (progn
+        (setq company-wubi-p nil)
+        (company-wubi--py-candidates (substring-no-properties prefix 1)))
+    (progn
+      (setq company-wubi-p t)
+      (company-wubi--wb-candidates prefix))))
+
+(defun company-wubi--wb-reverse-lookup-one (candidate)
+  (let ((index (--find-index (equal candidate (car it)) company-wubi-wb-reverse-table)))
+    (if index
+        (car (last (nth index company-wubi-wb-reverse-table)))
+      nil)))
+
+(defun company-wubi--wb-reverse-lookup (candidate)
+  "Return the wubi code of the `candidate'."
+  (when company-wubi-show-codes-in-pinyin
+    (or (company-wubi--wb-reverse-lookup-one candidate)
+        (let ((len (length candidate)))
+          (cond ((= len 2) (let ((c1 (company-wubi--wb-reverse-lookup-one (string (elt candidate 0))))
+                                 (c2 (company-wubi--wb-reverse-lookup-one (string (elt candidate 1)))))
+                             (and (> (length c1) 1)
+                                  (> (length c2) 1)
+                                  (concat
+                                   (substring-no-properties c1 0 2)
+                                   (substring-no-properties c2 0 2)))))
+                ((= len 3) (let ((c1 (company-wubi--wb-reverse-lookup-one (string (elt candidate 0))))
+                                 (c2 (company-wubi--wb-reverse-lookup-one (string (elt candidate 1))))
+                                 (c3 (company-wubi--wb-reverse-lookup-one (string (elt candidate 2)))))
+                             (and (> (length c1) 0)
+                                  (> (length c2) 0)
+                                  (> (length c3) 1)
+                                  (concat
+                                   (substring-no-properties c1 0 1)
+                                   (substring-no-properties c2 0 1)
+                                   (substring-no-properties c3 0 2)))))
+                ((> len 3) (let ((c1 (company-wubi--wb-reverse-lookup-one (string (elt candidate 0))))
+                                 (c2 (company-wubi--wb-reverse-lookup-one (string (elt candidate 1))))
+                                 (c3 (company-wubi--wb-reverse-lookup-one (string (elt candidate 2))))
+                                 (c4 (company-wubi--wb-reverse-lookup-one (string (elt candidate (1- len))))))
+                             (and (> (length c1) 0)
+                                  (> (length c2) 0)
+                                  (> (length c3) 0)
+                                  (> (length c4) 0)
+                                  (concat
+                                   (substring-no-properties c1 0 1)
+                                   (substring-no-properties c2 0 1)
+                                   (substring-no-properties c3 0 1)
+                                   (substring-no-properties c4 0 1)))))
+                (t ""))))))
+
+(defun company-wubi--wb-annotation (candidate)
+  "Use the company annotation to show the wubi input codes in wubi input."
+  (get-text-property 0 'code candidate))
+
+(defun company-wubi--py-annotation (candidate)
+  "Use the company annotation to show the wubi input codes in py input."
+  (company-wubi--wb-reverse-lookup candidate))
 
 (defun company-wubi--annotation (candidate)
-  "Use the company annotation to show the left input codes."
-  (get-text-property 0 'code candidate))
+  "Use the company annotation to show the wubi input codes."
+  (if company-wubi-p
+      (company-wubi--wb-annotation candidate)
+    (company-wubi--py-annotation candidate)))
 
 (defun company-wubi--localize-variable (var val)
   "Use local company setting for better user experiences."
