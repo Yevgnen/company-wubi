@@ -68,12 +68,6 @@ A string containing the name or the full path of the dict."
   "Hijack the `company-idle-delay' variable."
   :group 'company-wubi)
 
-(defcustom company-wubi-backends
-  '(company-wubi)
-  "Hijack the `company-backends' variable."
-  :group 'company-wubi
-  :type 'list)
-
 (defcustom company-wubi-minimum-prefix-length
   1
   "Hijack the `company-minimum-prefix-length' variable."
@@ -152,7 +146,14 @@ the wubi code of all the candidates will be lookup in realtime."
 (defvar company-wubi-wb-reverse-table nil)
 (defvar company-wubi-mark-pair 0)
 (defvar company-wubi-p t)
+
 (defvar company-wubi-active-map (make-sparse-keymap))
+
+(defvar company-wubi-backends nil)
+(make-local-variable 'company-wubi-backends)
+
+(defvar company-wubi-transformers nil)
+(make-local-variable 'company-wubi-transformers)
 
 ;;; Dictionary management
 (defun company-wubi--load-default-dict (file var)
@@ -297,16 +298,6 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
       (company-wubi--wb-annotation candidate)
     (company-wubi--py-annotation candidate)))
 
-(defun company-wubi--localize-variable (var val)
-  "Use local company setting for better user experiences."
-  (set (intern (format "company-wubi--%s" (symbol-name var))) (symbol-value var))
-  (set (intern (symbol-name var)) val))
-
-(defun company-wubi--delocalize-variable (var)
-  "Restore the local buffer company settings."
-  (set (intern (symbol-name var))
-       (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
-
 (defun company-wubi-previous-page ()
   "Move to previous page of candidates."
   (interactive)
@@ -393,6 +384,17 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
         (apply orig-fun args))
     (apply orig-fun args)))
 
+(defun company-wubi--localize-variable (var val)
+  "Use local company setting for better user experiences."
+  (make-local-variable var)
+  (set (intern (format "company-wubi--%s" (symbol-name var))) (symbol-value var))
+  (set (intern (symbol-name var)) val))
+
+(defun company-wubi--delocalize-variable (var)
+  "Restore the local buffer company settings."
+  (set (intern (symbol-name var))
+       (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
+
 ;;; Wubi mode
 (define-minor-mode wubi-mode
   "Toggle Wubi indication mode on or off.
@@ -409,7 +411,8 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
   (company-wubi--load-dicts-when-necessary)
 
   ;; Hijack the company settings
-  (company-wubi--localize-variable 'company-backends company-wubi-backends)
+  (company-wubi--localize-variable 'company-backends '(company-wubi))
+  (company-wubi--localize-variable 'company-transformers (remove 'company-sort-by-statistics company-transformers))
   (advice-add 'company-call-frontends :around #'company-wubi--call-frontends)
   (advice-add 'company--idle-delay :around #'company-wubi--idle)
   (advice-add 'company--good-prefix-p :around #'company-wubi--good-prefix-p)
@@ -421,7 +424,8 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
 (defun company-wubi-disable ()
   "Disable the wubi input method."
   ;; Restore settings
-  (company-wubi--delocalize-variable 'company-backends))
+  (company-wubi--delocalize-variable 'company-backends)
+  (company-wubi--delocalize-variable 'company-transformers))
 
 (global-set-key (kbd "C-\\") #'wubi-mode)
 
