@@ -205,7 +205,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
   "Return the candidates under pinyin input given `prefix'."
   (-flatten
    (-map #'cdr
-         (-take (* 5 company-tooltip-limit)
+         (-take 50
                 (-filter (lambda (l)
                            (string-prefix-p prefix (car l)))
                          company-wubi-py-table)))))
@@ -220,7 +220,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
               (-map (lambda (char)
                       (propertize char 'code (substring code (length prefix))))
                     chars)))
-          (-take (* 2 company-tooltip-limit)
+          (-take 50
                  (-filter (lambda (l)
                             (string-prefix-p prefix (car l)))
                           company-wubi-wb-table))))))
