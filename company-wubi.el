@@ -213,20 +213,17 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
 (defun company-wubi--wb-candidates (prefix)
   "Return the candidates under wubi input given `prefix'."
   (-distinct
-   (-sort (lambda (x y)
-            (< (length (get-text-property 0 'code x))
-               (length (get-text-property 0 'code y))))
-          (-flatten
-           (-map (lambda (c)
-                   (let ((code (car c))
-                         (chars (cdr c)))
-                     (-map (lambda (char)
-                             (propertize char 'code (substring code (length prefix))))
-                           chars)))
-                 (-take (* 2 company-tooltip-limit)
-                        (-filter (lambda (l)
-                                   (string-prefix-p prefix (car l)))
-                                 company-wubi-wb-table)))))))
+   (-flatten
+    (-map (lambda (c)
+            (let ((code (car c))
+                  (chars (cdr c)))
+              (-map (lambda (char)
+                      (propertize char 'code (substring code (length prefix))))
+                    chars)))
+          (-take (* 2 company-tooltip-limit)
+                 (-filter (lambda (l)
+                            (string-prefix-p prefix (car l)))
+                          company-wubi-wb-table))))))
 
 (defun company-wubi--candidates (prefix)
   "Return the candidates under given `prefix'."
