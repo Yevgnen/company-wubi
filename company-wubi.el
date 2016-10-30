@@ -323,9 +323,21 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
         (newmap (make-sparse-keymap)))
     (set-keymap-parent newmap oldmap)
 
-    ;; TODO: unbind the number keys
+    ;; Use digits to select candidates
     (dotimes (i 10)
       (define-key newmap (read-kbd-macro (format "%d" i)) 'company-complete-number))
+
+    ;; Auto completion when more than 4 char codes
+    (dotimes (i 26)
+      (let ((char (+ ?a i)))
+        (define-key newmap (read-kbd-macro (format "%s" (string char)))
+          `(lambda ()
+             (interactive)
+             (and company-wubi-p
+                  (>= (length (company-wubi--prefix)) 4)
+                  (company-complete-selection))
+             (insert ,char)
+             (company-manual-begin)))))
 
     (-map (lambda (mapping)
             (let ((in (car mapping))
