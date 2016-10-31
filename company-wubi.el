@@ -1,10 +1,10 @@
 ;;; company-wubi.el ---
 
-;; Copyright (C) 2012 Yevgnen Koh
+;; Copyright (C) 2016 Yevgnen Koh
 
 ;; Author: Yevgnen Koh <wherejoystarts@gmail.com>
-;; Version: 1.0.0
-;; Keywords:
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (company "0.9.0") (dash "2.13.0") (s "1.10.0"))
+;; Version: 0.0.1
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -21,7 +21,10 @@
 
 ;;; Commentary:
 
-;;
+;; A tiny Wubi Input Method(五笔输入法) for Emacs using company mode.
+;; e.g.
+;; ;; Basic usage.
+;; (global-set-key (kbd "C-\\") #'wubi-mode)
 ;;
 ;; See documentation on https://github.com/yevgnen/company-wubi.
 
@@ -186,7 +189,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
   (setq company-wubi-py-table nil)
   (setq company-wubi-wb-reverse-table nil))
 
-;;; Candidates
+;;; Company things
 (defun company-wubi--prefix ()
   "Get a prefix from current position."
   (let ((case-fold-search nil))
@@ -399,6 +402,8 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
         (apply orig-fun args))
     (apply orig-fun args)))
 
+;;; Wubi mode
+;; Initialization and finalization
 (defun company-wubi--localize-variable (var val)
   "Use local company setting for better user experiences."
   (make-local-variable var)
@@ -409,28 +414,6 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
   "Restore the local buffer company settings."
   (set (intern (symbol-name var))
        (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
-
-;;; Wubi mode
-(defvar wubi-mode-map (make-sparse-keymap))
-
-(-each company-wubi-auto-complete-chars
-  (lambda (mapping)
-    (let ((in (car mapping))
-          (out (cadr mapping)))
-      (define-key wubi-mode-map (read-kbd-macro in)
-        `(lambda ()
-           (interactive)
-           (company-wubi--insert-punctuation ,out))))))
-
-(define-minor-mode wubi-mode
-  "Toggle Wubi indication mode on or off.
-Turn Wubi indication mode on if ARG is positive, off otherwise."
-  :group 'company-wubi
-  :lighter " 五"
-  :keymap wubi-mode-map
-  (if wubi-mode
-      (company-wubi-enable)
-    (company-wubi-disable)))
 
 (defun company-wubi-enable ()
   "Enable the wubi input method."
@@ -454,7 +437,27 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
   (company-wubi--delocalize-variable 'company-backends)
   (company-wubi--delocalize-variable 'company-transformers))
 
-(global-set-key (kbd "C-\\") #'wubi-mode)
+;; Keymap
+(defvar wubi-mode-map (make-sparse-keymap))
+(-each company-wubi-auto-complete-chars
+  (lambda (mapping)
+    (let ((in (car mapping))
+          (out (cadr mapping)))
+      (define-key wubi-mode-map (read-kbd-macro in)
+        `(lambda ()
+           (interactive)
+           (company-wubi--insert-punctuation ,out))))))
+
+;;;###autoload
+(define-minor-mode wubi-mode
+  "Toggle Wubi indication mode on or off.
+Turn Wubi indication mode on if ARG is positive, off otherwise."
+  :group 'company-wubi
+  :lighter " 五"
+  :keymap wubi-mode-map
+  (if wubi-mode
+      (company-wubi-enable)
+    (company-wubi-disable)))
 
 ;;;###autoload
 (defun company-wubi (command &optional arg &rest ignored)
