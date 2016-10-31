@@ -382,7 +382,14 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
             (company-tooltip-limit company-wubi-tooltip-limit)
             (company-tooltip-align-annotations company-wubi-tooltip-align-annotations))
         (apply orig-fun args))
-    (apply orig-fun args)))
+    (apply orig-fun args))
+
+  (and wubi-mode
+       company-wubi-p
+       (let ((prefix (company-wubi--prefix)))
+         (and (= (length prefix) 4)
+              (= (length company-candidates) 1)
+              (company-complete-selection)))))
 
 (defun company-wubi--idle (orig-fun &rest args)
   (if wubi-mode

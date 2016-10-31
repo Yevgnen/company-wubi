@@ -27,7 +27,7 @@ Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
 [[file:wubi.gif]]
 * Todo
 - +输入中文符号；+
-- 支持四码上屏；
+- +支持四码上屏；+
 - 改进候选窗汉字无法正确对齐；
 - 与英文混输时，字母后面需要加空格才能正确输入；
 - +使用local的开关设定，目前通过劫持company-mode的设置实现；+
