@@ -37,7 +37,7 @@
   :group 'company)
 
 (defcustom company-wubi-wb-dict-file
-  (expand-file-name "wb_table.txt" (file-name-directory (buffer-file-name)))
+  (expand-file-name "wb_table.txt" (file-name-directory load-file-name))
   "Location of the wubi dict file.
 
 A string containing the name or the full path of the dict."
@@ -46,7 +46,7 @@ A string containing the name or the full path of the dict."
   :risky t)
 
 (defcustom company-wubi-py-dict-file
-  (expand-file-name "py_table.txt" (file-name-directory (buffer-file-name)))
+  (expand-file-name "py_table.txt" (file-name-directory load-file-name))
   "Location of the pinyin dict file.
 
 A string containing the name or the full path of the dict."
@@ -55,7 +55,7 @@ A string containing the name or the full path of the dict."
   :risky t)
 
 (defcustom company-wubi-wb-reverse-dict-file
-  (expand-file-name "wb_reverse_table.txt" (file-name-directory (buffer-file-name)))
+  (expand-file-name "wb_reverse_table.txt" (file-name-directory load-file-name))
   "Location of the wubi reverse dict file.
 
 A string containing the name or the full path of the dict."
