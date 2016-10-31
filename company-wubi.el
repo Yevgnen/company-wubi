@@ -341,7 +341,7 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
 
     (-map (lambda (mapping)
             (let ((in (car mapping))
-                  (out (cdr mapping)))
+                  (out (cadr mapping)))
               ;; Define new bindings
               (define-key newmap in
                 `(lambda ()
