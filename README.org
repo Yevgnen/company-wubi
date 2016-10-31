@@ -15,16 +15,23 @@
 * Introduction
 A very tiny Wubi input method(五笔输入法) for emacs using [[http://company-mode.github.io][ ~company-mode~ ]] .
 * Usage
-Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
+#+BEGIN_SRC emacs-lisp
+  (require 'company-wubi)
+  (global-set-key (kbd "C-\\") #'wubi-mode)
+#+END_SRC
 * Features
 - 使用清歌输入法的词库；
-- 支持标点符号自动上屏；
+- 四码上屏，支持标点符号自动上屏；
 - 使用 ~-/=~ 键翻页；
 - 使用分号与引号键选择第二第三候选词;
 - 支持临时拼音，使用 ~`~ 前缀可以临时输入拼音；
-- 支持拼音反查。
+- 支持拼音反查；
+- 使用 ~z~ 键可以输入特殊符号。
 * Screenshot
+** ~company-wubi~
 [[file:wubi.gif]]
+** ~origin qingg （清歌输入法）~
+[[file:qingg.gif]]
 * Todo
 - +输入中文符号；+
 - +支持四码上屏；+
