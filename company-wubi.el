@@ -40,36 +40,35 @@
   :group 'company)
 
 (defcustom company-wubi-wb-dict-file
-  (expand-file-name "wb_table.txt" (file-name-directory load-file-name))
+  `(,(expand-file-name "wb_table.txt" (file-name-directory (or load-file-name (buffer-file-name))))
+    ,(expand-file-name "sp_table.txt" (file-name-directory (or load-file-name (buffer-file-name)))))
   "Location of the wubi dict file.
 
 A string containing the name or the full path of the dict."
   :group 'company-wubi
-  :type '(file :must-match t)
-  :risky t)
+  :type '(repeat file))
 
 (defcustom company-wubi-py-dict-file
-  (expand-file-name "py_table.txt" (file-name-directory load-file-name))
+  `(,(expand-file-name "py_table.txt" (file-name-directory (or load-file-name (buffer-file-name)))))
   "Location of the pinyin dict file.
 
 A string containing the name or the full path of the dict."
   :group 'company-wubi
-  :type '(file :must-match t)
-  :risky t)
+  :type '(repeat file))
 
 (defcustom company-wubi-wb-reverse-dict-file
-  (expand-file-name "wb_reverse_table.txt" (file-name-directory load-file-name))
+  `(,(expand-file-name "wb_reverse_table.txt" (file-name-directory (or load-file-name (buffer-file-name)))))
   "Location of the wubi reverse dict file.
 
 A string containing the name or the full path of the dict."
   :group 'company-wubi
-  :type '(file :must-match t)
-  :risky t)
+  :type '(repeat file))
 
 (defcustom company-wubi-idle-delay
   0
   "Hijack the `company-idle-delay' variable."
-  :group 'company-wubi)
+  :group 'company-wubi
+  :type 'number)
 
 (defcustom company-wubi-minimum-prefix-length
   1
@@ -159,14 +158,19 @@ the wubi code of all the candidates will be lookup in realtime."
 (make-local-variable 'company-wubi-transformers)
 
 ;;; Dictionary management
-(defun company-wubi--load-default-dict (file var)
-  (with-temp-buffer
-    (insert-file-contents file)
-    (set (intern (symbol-name var))
-         (-map (lambda (l)
-                 (s-split " " l))
-               (-map #'s-trim
-                     (s-split "\n" (buffer-string)))))))
+(defun company-wubi--load-default-dict (files var)
+  (set (intern (symbol-name var))
+       (let ((dict))
+         (-each files
+           (lambda (file)
+             (with-temp-buffer
+               (insert-file-contents file)
+               (setq dict (append dict
+                                  (-map (lambda (l)
+                                          (s-split " " l))
+                                        (-map #'s-trim
+                                              (s-split "\n" (buffer-string)))))))))
+         dict)))
 
 (defun company-wubi--load-dicts ()
   "Load all the dictionaries.
@@ -215,18 +219,26 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
 
 (defun company-wubi--wb-candidates (prefix)
   "Return the candidates under wubi input given `prefix'."
-  (-distinct
-   (-flatten
-    (-map (lambda (c)
-            (let ((code (car c))
-                  (chars (cdr c)))
-              (-map (lambda (char)
-                      (propertize char 'code (substring code (length prefix))))
-                    chars)))
-          (-take 50
-                 (-filter (lambda (l)
-                            (string-prefix-p prefix (car l)))
-                          company-wubi-wb-table))))))
+  (let ((candidates (-distinct
+                     (-flatten
+                      (-map (lambda (c)
+                              (let ((code (car c))
+                                    (chars (cdr c)))
+                                (-map (lambda (char)
+                                        (propertize char 'code (substring code (length prefix))))
+                                      chars)))
+                            (let ((origs (-filter (lambda (l)
+                                                    (string-prefix-p prefix (car l)))
+                                                  company-wubi-wb-table)))
+                              ;; Prefix `z' is preserved to input special symbol
+                              (if (s-starts-with? "z" prefix)
+                                  (if (< (length prefix) 4)
+                                      (-select-columns '(0 1) origs)
+                                    (-map (lambda (orig)
+                                            (-remove-at 1 orig))
+                                          origs))
+                                (-take 50 origs))))))))
+    candidates))
 
 (defun company-wubi--candidates (prefix)
   "Return the candidates under given `prefix'."
