@@ -1,4 +1,4 @@
-;;; company-wubi.el ---
+;;; company-wubi.el --- A tiny Wubi Input Method(五笔输入法) for Emacs using company mode.
 
 ;; Copyright (C) 2016 Yevgnen Koh
 
@@ -20,7 +20,6 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
 ;; A tiny Wubi Input Method(五笔输入法) for Emacs using company mode.
 ;; e.g.
 ;; ;; Basic usage.
@@ -129,7 +128,7 @@ or controlling keys like page flipping or candidate selection.
 Currently -/= is used for page flipping and SPC is used for auto completion,
 while ;/' is used for 2nd and 3rd candidate selection.
 
-When the `cdr' of the element is not `nil', the `car' of the
+When the `cadr' of the element is not nil, the `car' of the
 element will be inserted."
   :group 'company-wubi)
 
@@ -159,6 +158,10 @@ the wubi code of all the candidates will be lookup in realtime."
 
 ;;; Dictionary management
 (defun company-wubi--load-default-dict (files var)
+  "Load dictionaris which is defined in the default format.
+
+FILES is should be a list of path which specifies the file.
+VAR is used to store the dictionary data."
   (set (intern (symbol-name var))
        (let ((dict))
          (-each files
@@ -181,6 +184,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
   (company-wubi--load-default-dict company-wubi-wb-reverse-dict-file 'company-wubi-wb-reverse-table))
 
 (defun company-wubi--load-dicts-when-necessary ()
+  "Load all the dictionaries when some of them are nil."
   (unless
       (and company-wubi-wb-table
            company-wubi-py-table
@@ -209,7 +213,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
                 prefix)))))))
 
 (defun company-wubi--py-candidates (prefix)
-  "Return the candidates under pinyin input given `prefix'."
+  "Return the candidates under pinyin input given PREFIX."
   (-flatten
    (-map #'cdr
          (-take 50
@@ -218,7 +222,7 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
                          company-wubi-py-table)))))
 
 (defun company-wubi--wb-candidates (prefix)
-  "Return the candidates under wubi input given `prefix'."
+  "Return the candidates under wubi input given PREFIX."
   (let ((candidates (-distinct
                      (-flatten
                       (-map (lambda (c)
@@ -241,26 +245,25 @@ Including the `wb_table', `py_table' and `wb_reverse_table'."
     candidates))
 
 (defun company-wubi--candidates (prefix)
-  "Return the candidates under given `prefix'."
+  "Return the candidates under given PREFIX."
   (if company-wubi-p
       (company-wubi--wb-candidates prefix)
     (company-wubi--py-candidates (substring-no-properties prefix 1))))
 
 (defun company-wubi--wb-reverse-lookup-one (candidate)
+  "Find the wubi code of CANDIDATE."
   (let ((index (--find-index (equal candidate (car it)) company-wubi-wb-reverse-table)))
     (if index
         (car (last (nth index company-wubi-wb-reverse-table)))
       nil)))
 
 (defun company-wubi--wb-reverse-lookup (candidate)
-  "Return the wubi code of the `candidate'.
+  "Return the wubi code of the CANDIDATE.
 
 The wubi code is generated in the following rules.
-(A-Z denotes chinese characters, a-z denote wubi codes in order.)
-
 When the Chinese characters is AB, use code aabb,
-when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
-"
+when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz,
+where AB...Z denotes chinese characters, a...z denote wubi codes in order."
   (when company-wubi-show-codes-in-pinyin
     (or (company-wubi--wb-reverse-lookup-one candidate)
         (let ((len (length candidate)))
@@ -297,15 +300,15 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
                 (t ""))))))
 
 (defun company-wubi--wb-annotation (candidate)
-  "Use the company annotation to show the wubi input codes in wubi input."
+  "Use the company annotation to show the wubi input codes in wubi mode given CANDIDATE."
   (get-text-property 0 'code candidate))
 
 (defun company-wubi--py-annotation (candidate)
-  "Use the company annotation to show the wubi input codes in py input."
+  "Use the company annotation to show the wubi input codes in py mode given CANDIDATE."
   (company-wubi--wb-reverse-lookup candidate))
 
 (defun company-wubi--annotation (candidate)
-  "Use the company annotation to show the wubi input codes."
+  "Use the company annotation to show the wubi input codes given CANDIDATE."
   (if company-wubi-p
       (company-wubi--wb-annotation candidate)
     (company-wubi--py-annotation candidate)))
@@ -333,7 +336,9 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
       (1- company-wubi-tooltip-limit))))
 
 (defun company-wubi--insert-punctuation (chars)
-  "Insert the punctuation."
+  "Insert the punctuation given the CHARS pair.
+
+CHARS should be the element of `company-wubi-auto-complete-chars'."
   (let ((len (length chars)))
     (cond ((= len 0)
            nil)
@@ -424,13 +429,13 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
 ;;; Wubi mode
 ;; Initialization and finalization
 (defun company-wubi--localize-variable (var val)
-  "Use local company setting for better user experiences."
+  "Make VAR buffer local, save its original value and set it to VAL."
   (make-local-variable var)
   (set (intern (format "company-wubi--%s" (symbol-name var))) (symbol-value var))
   (set (intern (symbol-name var)) val))
 
 (defun company-wubi--delocalize-variable (var)
-  "Restore the local buffer company settings."
+  "Restore the saved value of VAR in current buffer."
   (set (intern (symbol-name var))
        (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
 
@@ -480,7 +485,7 @@ Turn Wubi indication mode on if ARG is positive, off otherwise."
 
 ;;;###autoload
 (defun company-wubi (command &optional arg &rest ignored)
-  "`company-mode' completion back-end for wubi.
+  "A `company-mode' completion back-end for Chinese Wubi Input Method.
 Provide completion info according to COMMAND and ARG.  IGNORED, not used."
   (interactive (list 'interactive))
   (cl-case command
@@ -493,4 +498,4 @@ Provide completion info according to COMMAND and ARG.  IGNORED, not used."
 
 (provide 'company-wubi)
 
-;; company-wubi.el ends here
+;;; company-wubi.el ends here
