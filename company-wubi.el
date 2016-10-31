@@ -88,10 +88,10 @@ A string containing the name or the full path of the dict."
 
 (defcustom company-wubi-auto-complete-chars
   '((" ")
-    ("-")
-    ("=")
-    (";")
-    ("'")
+    ("-" "－")
+    ("=" "＝")
+    (";" "；")
+    ("'" "「」")
     ("," "，")
     ("." "。")
     ("~" "～")
@@ -144,7 +144,7 @@ the wubi code of all the candidates will be lookup in realtime."
 (defvar company-wubi-wb-table nil)
 (defvar company-wubi-py-table nil)
 (defvar company-wubi-wb-reverse-table nil)
-(defvar company-wubi-mark-pair 0)
+(defvar company-wubi-punctuation-pos 0)
 (defvar company-wubi-p t)
 
 (defvar company-wubi-active-map (make-sparse-keymap))
@@ -317,6 +317,18 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
    (- company-selection
       (1- company-wubi-tooltip-limit))))
 
+(defun company-wubi--insert-punctuation (chars)
+  "Insert the punctuation."
+  (let ((len (length chars)))
+    (cond ((= len 0)
+           nil)
+          ((= len 1)
+           (insert chars))
+          ((= len 2)
+           (progn
+             (insert (elt chars company-wubi-punctuation-pos))
+             (setq company-wubi-punctuation-pos (- 1 company-wubi-punctuation-pos)))))))
+
 (defun company-wubi--bind-keys ()
   "Bind completion keys and other keys."
   (let ((oldmap company-active-map)
@@ -352,16 +364,10 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
                          ((string= ,in "-") (company-wubi-previous-page))
                          ((string= ,in "=") (company-wubi-next-page))
                          (t (company-complete-selection)))
-                   ;; Insert the auto complete char
-                   (let ((len (length ,out)))
-                     (cond ((= len 0)
-                            nil)
-                           ((= len 1)
-                            (insert ,out))
-                           ((= len 2)
-                            (progn
-                              (insert (elt ,out company-wubi-mark-pair))
-                              (setq company-wubi-mark-pair (- 1 company-wubi-mark-pair))))))))
+
+                   ;; Insert the auto complete char unless it's not a controlling char
+                   (unless (member ,in '("-" "=" ";" "'"))
+                     (company-wubi--insert-punctuation ,out))))
               mapping))
           company-wubi-auto-complete-chars)
     newmap))
@@ -405,11 +411,23 @@ when ABC use abcc, when ABCD use abcd, when ABC...Z, use abcz.
        (symbol-value (intern (format "company-wubi--%s" (symbol-name var))))))
 
 ;;; Wubi mode
+(defvar wubi-mode-map (make-sparse-keymap))
+
+(-each company-wubi-auto-complete-chars
+  (lambda (mapping)
+    (let ((in (car mapping))
+          (out (cadr mapping)))
+      (define-key wubi-mode-map (read-kbd-macro in)
+        `(lambda ()
+           (interactive)
+           (company-wubi--insert-punctuation ,out))))))
+
 (define-minor-mode wubi-mode
   "Toggle Wubi indication mode on or off.
 Turn Wubi indication mode on if ARG is positive, off otherwise."
   :group 'company-wubi
   :lighter " 五"
+  :keymap wubi-mode-map
   (if wubi-mode
       (company-wubi-enable)
     (company-wubi-disable)))

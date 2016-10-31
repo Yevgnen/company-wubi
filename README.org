@@ -13,7 +13,7 @@
 #+OPTIONS: ':t
 
 * Introduction
-A very simple Wubi input method(五笔输入法) for emacs using [[http://company-mode.github.io][~company-mode~]] .
+A very tiny Wubi input method(五笔输入法) for emacs using [[http://company-mode.github.io][ ~company-mode~ ]] .
 * Usage
 Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
 * Features
@@ -26,6 +26,7 @@ Eval ~company-wubi.el~ and use ~C-\~ to toggle the input method.
 * Screenshot
 [[file:wubi.gif]]
 * Todo
+- +输入中文符号；+
 - +支持四码上屏；+
 - 改进候选窗汉字无法正确对齐；
 - +与英文混输时，字母后面需要加空格才能正确输入；+
